@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Felicitări!</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #ffe4e1;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      gap: 20px;
+    }
+
+    /* ---- Titlu ---- */
+    #title {
+      font-size: 52px;
+      font-weight: bold;
+      color: #9370db;
+      text-align: center;
+      letter-spacing: 3px;
+    }
+
+    /* ---- Rând cu titlu + poză ---- */
+    #topRow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      transition: all 0.8s ease; /* ← adaugă asta */
+       position: relative;        /* ← adaugă asta */
+    }
+
+    /* ---- Poza ---- */
+    #photo {
+      width: 200px;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(147,112,219,0.3);
+    }
+
+    /* ---- Butoane ---- */
+    #btn {
+      padding: 15px 30px;
+      font-size: 20px;
+      background-color: #ffb6c1;
+      color: #9370db;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #btn2 {
+      padding: 15px 30px;
+      font-size: 20px;
+      background-color: #c8a2c8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      display: none;
+      z-index: 1000;
+    }
+
+    /* ---- Mesaj Felicitări ---- */
+    #message {
+      display: none;
+      font-size: 60px;
+      font-weight: bold;
+      color: #9370db;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    /* ---- Citat jos ---- */
+    #quote {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      color: #9370db;
+      font-style: italic;
+      text-align: center;
+      width: 90%;
+    }
+
+    /* ---- Popup mesaj ---- */
+    #secretBox {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 90%;
+      z-index: 999;
+    }
+
+    #secretBox textarea {
+      width: 100%;
+      height: 150px;
+      font-size: 16px;
+      border: 2px solid #ffb6c1;
+      border-radius: 8px;
+      padding: 10px;
+      color: #9370db;
+      resize: none;
+      outline: none;
+      font-family: Arial, sans-serif;
+    }
+
+    #closeBtn {
+      margin-top: 10px;
+      padding: 8px 20px;
+      background: #ffb6c1;
+      color: #9370db;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Titlu + Poză -->
+  <div id="topRow">
+    <div id="title">✨ You Did It! ✨</div>
+    <img id="photo" src="Poza.jpeg" alt="Absolventă">
+  </div>
+
+  <!-- Buton + Mesaj -->
+  <button id="btn" onclick="start()">Push me!</button>
+  <div id="message"></div>
+
+  <!-- Buton mesaj secret (apare în colț după push) -->
+  <button id="btn2" onclick="openMessage()">Open message 💌</button>
+
+  <!-- Popup -->
+  <div id="secretBox">
+    <textarea readonly>
+     Draga Pariscila,
+	 Felicitari! 
+	 Ești o persoană atât de specială, cu multe calități extraordinare.
+	 Sper ca în această viață să știi să le valorifici pe toate și să le pui în slujba lui Dumnezeu și spre binecuvântarea celor din jur. 
+	 Sunt mândră de tine și sunt sigură că tot ce ți-ai propus pentru viitor vei reuși. 
+	 Dumnezeu să îți binecuvânteze pașii și, în orice decizie ai avea de luat în viață, să cauți Voia Lui în toate.
+	 Te iubesc!!🎉
+	 
+	 P.S.: Hai cu notele alea mari in BAC!🎉
+    </textarea>
+    <br>
+    <button id="closeBtn" onclick="closeMessage()">Close ✕</button>
+  </div>
+
+  <!-- Citat jos -->
+  <div id="quote">
+    "Incredinteaza-ti lucrarile in mana Domnului, si iti vor izbuti planurile.
+	                                                           -Proverbe 16:3"
+  </div>
+
+  <script>
+    const canvas = document.getElementById("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    let pieces = [];
+    const colors = ["red","yellow","blue","green","magenta","orange","pink","cyan"];
+
+    function spawnBurst(x, y) {
+      for (let i = 0; i < 250; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 8 + 3;
+        pieces.push({
+          x, y,
+          dx: Math.cos(angle) * speed,
+          dy: Math.sin(angle) * speed - 5,
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces = pieces.filter(p => p.y < canvas.height + 20);
+      for (let p of pieces) {
+        p.x += p.dx;
+        p.y += p.dy;
+        p.dy += 0.2;
+        p.dx *= 0.99;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      requestAnimationFrame(animateConfetti);
+    }
+
+    function typeWriter(text, el, delay, callback) {
+      let i = 0;
+      const timer = setInterval(() => {
+        el.textContent += text[i++];
+        if (i >= text.length) { clearInterval(timer); callback?.(); }
+      }, delay);
+    }
+
+    function start() {
+      document.getElementById("btn").style.display = "none";
+  document.getElementById("btn2").style.display = "block";
+
+  // Mută topRow sus
+  const topRow = document.getElementById("topRow");
+  topRow.style.position = "fixed";
+  topRow.style.top = "20px";
+  topRow.style.left = "50%";
+  topRow.style.transform = "translateX(-50%)";
+  topRow.style.width = "100%";
+  topRow.style.justifyContent = "center";
+
+  // Micșorează poza și titlul
+  document.getElementById("photo").style.width = "80px";
+  document.getElementById("title").style.fontSize = "28px";
+
+  // Arată Felicitări
+  const msg = document.getElementById("message");
+  msg.style.display = "block";
+  typeWriter("Felicitări!", msg, 500, null);
+
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+  spawnBurst(cx, cy);
+  let bursts = 0;
+  const burstTimer = setInterval(() => {
+    spawnBurst(cx, cy);
+    if (++bursts >= 5) clearInterval(burstTimer);
+  }, 600);
+    }
+
+    function openMessage() {
+      document.getElementById("secretBox").style.display = "block";
+    }
+
+    function closeMessage() {
+      document.getElementById("secretBox").style.display = "none";
+    }
+
+    animateConfetti();
+  </script>
+</body>
+</html>
